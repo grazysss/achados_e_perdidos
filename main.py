@@ -21,3 +21,4 @@ async def test_connection():
     conn = await get_db_connection()
     await conn.close()
     return {"message": "Conexão da API_ACHADOS&PERDIDOS com BD_A&P bem-sucedida!"}
+
