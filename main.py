@@ -9,7 +9,7 @@ async def get_db_connection():
     return await asyncpg.connect(
         user="postgres",
         password="5432",
-        database="achados-e-perdidos",
+        database="achados_e_perdidos",
         host="localhost"
     )
 
@@ -62,6 +62,7 @@ async def adicionar_gremista(gremistas: Gremista):
         "message": "GREMISTA ADICIONADO COM SUCESSO!!",
         "gremista": dict(novo_gremista)
     }
+
 @app.get("/gremistas")
 async def listar_gremistas():
     conn = await get_db_connection()
@@ -133,6 +134,28 @@ async def listar_categorias():
         "categorias": [dict(categoria) for categoria in categorias]
     }
 
+@app.delete("/categorias/{id}")
+async def deletar_categoria(id: int):
+    conn = await get_db_connection()
+    categoria_deletada = await conn.fetchrow("""
+        DELETE FROM categorias
+        WHERE id = $1
+        RETURNING *
+        """, id)
+    
+    await conn.close()
+
+    if categoria_deletada is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Categoria não encontrada"
+        )
+    
+    return {
+        "message": "CATEGORIA DELETADA COM SUCESSO!",
+        "categoria": dict(categoria_deletada)
+    }
+
 @app.post("/locais")
 async def adicionar_local(locais: Local):
     conn = await get_db_connection()
@@ -146,7 +169,29 @@ async def adicionar_local(locais: Local):
     await conn.close()
     return {
         "message": "LOCAL ADICIONADO!!",
-        "categoria": dict(novo_local)
+        "local": dict(novo_local)
+    }
+
+@app.delete("/locais/{id}")
+async def deletar_local(id: int):
+    conn = await get_db_connection()
+    local_deletado = await conn.fetchrow("""
+        DELETE FROM locais
+        WHERE id = $1
+        RETURNING *
+        """, id)
+    
+    await conn.close()
+
+    if local_deletado is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Local não foi encontrado"
+        )
+    
+    return {
+        "message": "LOCAL DELETADO COM SUCESSO!",
+        "local": dict(local_deletado)
     }
 
 @app.post("/itens")
@@ -216,7 +261,7 @@ async def listar_itens():
         FROM itens i
         JOIN categorias c ON i.categoria_id = c.id
         JOIN locais l ON i.local_id = l.id
-        JOIN gremistas gr ON i.gremista_recebeu_id = gr.id
+        LEFT JOIN gremistas gr ON i.gremista_recebeu_id = gr.id
         LEFT JOIN gremistas ge ON i.gremista_entregou_id = ge.id
         ORDER BY i.id
     """)
