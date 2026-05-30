@@ -9,7 +9,7 @@ async def get_db_connection():
     return await asyncpg.connect(
         user="postgres",
         password="5432",
-        database="achados_e_perdidos",
+        database="achados-e-perdidos",
         host="localhost"
     )
 
@@ -62,6 +62,44 @@ async def adicionar_gremista(gremistas: Gremista):
         "message": "GREMISTA ADICIONADO COM SUCESSO!!",
         "gremista": dict(novo_gremista)
     }
+@app.get("/gremistas")
+async def listar_gremistas():
+    conn = await get_db_connection()
+
+    gremistas = await conn.fetch("""
+        SELECT * FROM gremistas
+        ORDER BY id
+    """)
+
+    await conn.close()
+
+    return {
+        "message": "GREMISTAS LISTADOS COM SUCESSO!",
+        "gremistas": [dict(gremista) for gremista in gremistas]
+    }
+
+@app.delete("/gremistas/{id}")
+async def deletar_gremista(id: int):
+    conn = await get_db_connection()
+
+    gremista_deletado = await conn.fetchrow("""
+        DELETE FROM gremistas
+        WHERE id = $1
+        RETURNING *
+    """, id)
+
+    await conn.close()
+
+    if gremista_deletado is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Gremista não encontrado"
+        )
+
+    return {
+        "message": "GREMISTA DELETADO COM SUCESSO!",
+        "gremista": dict(gremista_deletado)
+    }
 
 @app.post("/categorias")
 async def criar_categoria(categorias: Categoria):
@@ -77,6 +115,22 @@ async def criar_categoria(categorias: Categoria):
     return {
         "message": "CATEGORIA ADICIONADA!!",
         "categoria": dict(nova_categoria)
+    }
+
+@app.get("/categorias")
+async def listar_categorias():
+    conn = await get_db_connection()
+
+    categorias = await conn.fetch("""
+        SELECT * FROM categorias
+        ORDER BY id
+    """)
+
+    await conn.close()
+
+    return {
+        "message": "CATEGORIAS LISTADAS COM SUCESSO!",
+        "categorias": [dict(categoria) for categoria in categorias]
     }
 
 @app.post("/locais")
@@ -128,6 +182,22 @@ async def criar_item(item: Item):
         "item": dict(novo_item)
         }
 
+@app.get("/locais")
+async def listar_locais():
+    conn = await get_db_connection()
+
+    locais = await conn.fetch("""
+        SELECT * FROM locais
+        ORDER BY id
+    """)
+
+    await conn.close()
+
+    return {
+        "message": "LOCAIS LISTADOS COM SUCESSO!",
+        "locais": [dict(local) for local in locais]
+    }
+
 @app.get("/itens")
 async def listar_itens():
     conn = await get_db_connection()
@@ -166,7 +236,10 @@ async def listar_itens():
                 "gremista_recebeu": i["gremista_recebeu_nome"],
                 "gremista_entregou": i["gremista_entregou_nome"]
             })
-    return {"item": list_itens}
+    return {
+    "message": "ITENS LISTADOS COM SUCESSO!",
+    "itens": list_itens
+}
 
 @app.get("/itens/{id}")
 async def buscar_item(id: int):
@@ -182,7 +255,10 @@ async def buscar_item(id: int):
     if item is None:
         raise HTTPException(status_code=404, detail="Item não encontrado")
 
-    return dict(item)
+    return {
+    "message": "ITEM ENCONTRADO!",
+    "item": dict(item)
+}
 
 
 @app.put("/itens/{id}")
@@ -217,7 +293,10 @@ async def atualizar_item(id: int, item: Item):
     if item_atualizado is None:
         raise HTTPException(status_code=404, detail="Item não encontrado")
 
-    return dict(item_atualizado)
+    return {
+    "message": "ITEM ATUALIZADO COM SUCESSO!",
+    "item": dict(item_atualizado)
+}
 
 
 @app.delete("/itens/{id}")
