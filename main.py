@@ -13,6 +13,20 @@ async def get_db_connection():
         host="localhost"
     )
 
+class Gremista(BaseModel):
+    nome: str
+    matricula: str
+    cargo: str
+class Item(BaseModel):
+    descricao: str
+    data_registro: date
+    status: str
+    dono_recuperou: str | None = None
+    categoria_id: int
+    local_id: int
+    gremista_recebeu_id: int
+    gremista_entregou_id: int | None = None
+
 @app.get("/status")
 async def status():
     return {"message": "API FUNCIONANDOOO AEEEEEEE!!!"}
@@ -22,6 +36,55 @@ async def test_connection():
     conn = await get_db_connection()
     await conn.close()
     return {"message": "Conexão da API_ACHADOS&PERDIDOS com BD_A&P bem-sucedida!"}
+
+@app.post("/gremistas")
+async def adicionar_gremista(gremistas: Gremista):
+    conn = await get_db_connection()
+    novo_gremista = await conn.fetchrow("""
+        INSERT INTO gremistas (nome, matricula, cargo)
+        VALUES ($1, $2, $3)
+        RETURNING *
+        """,
+        gremistas.nome,
+        gremistas.matricula,
+        gremistas.cargo
+        )
+    
+    await conn.close()
+    return {
+        "message": "GREMISTA ADICIONADO COM SUCESSO!!",
+        "gremista": dict(novo_gremista)
+    }
+
+@app.post("/itens")
+async def criar_item(item: Item):
+    conn = await get_db_connection()
+
+    novo_item = await conn.fetchrow("""
+        INSERT INTO itens (
+            descricao,
+            data_registro,
+            status,
+            dono_recuperou,
+            categoria_id,
+            local_id,
+            gremista_recebeu_id,
+            gremista_entregou_id
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    """,
+    item.descricao,
+    item.data_registro,
+    item.status,
+    item.dono_recuperou,
+    item.categoria_id,
+    item.local_id,
+    item.gremista_recebeu_id,
+    item.gremista_entregou_id
+    )
+
+    await conn.close()
+    return {"message": "ITEM CRIADO!"}
 
 @app.get("/itens")
 async def listar_itens():
@@ -62,59 +125,6 @@ async def listar_itens():
                 "gremista_entregou": i["gremista_entregou_nome"]
             })
     return {"item": list_itens}
-
-
-# @app.get("/get_alunos")
-# async def get_alunos():
-#     conn = await get_db_connection()
-#     alunos = await conn.fetch("SELECT * FROM alunos")
-#     await conn.close()
-
-#     list_alunos = []
-#     for i in alunos:
-#         list_alunos.append(f"ID do aluno: {i["id"]}, nome: {i["nome"]}, email: {i["email"]}")
-#     return {"users": list_alunos}
-
-class Item(BaseModel):
-    descricao: str
-    data_registro: date
-    status: str
-    dono_recuperou: str | None = None
-    categoria_id: int
-    local_id: int
-    gremista_recebeu_id: int
-    gremista_entregou_id: int
-
-
-@app.post("/itens")
-async def criar_item(item: Item):
-    conn = await get_db_connection()
-
-    novo_item = await conn.fetchrow("""
-        INSERT INTO itens (
-            descricao,
-            data_registro,
-            status,
-            dono_recuperou,
-            categoria_id,
-            local_id,
-            gremista_recebeu_id,
-            gremista_entregou_id
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    """,
-    item.descricao,
-    item.data_registro,
-    item.status,
-    item.dono_recuperou,
-    item.categoria_id,
-    item.local_id,
-    item.gremista_recebeu_id,
-    item.gremista_entregou_id
-    )
-
-    await conn.close()
-    return {"message": "ITEM CRIADO!"}
 
 @app.get("/itens/{id}")
 async def buscar_item(id: int):
