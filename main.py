@@ -123,7 +123,10 @@ async def criar_item(item: Item):
     )
 
     await conn.close()
-    return {"message": "ITEM CRIADO!"}
+    return {
+        "message": "ITEM CRIADO!",
+        "item": dict(novo_item)
+        }
 
 @app.get("/itens")
 async def listar_itens():
@@ -144,7 +147,7 @@ async def listar_itens():
         JOIN categorias c ON i.categoria_id = c.id
         JOIN locais l ON i.local_id = l.id
         JOIN gremistas gr ON i.gremista_recebeu_id = gr.id
-        JOIN gremistas ge ON i.gremista_entregou_id = ge.id
+        LEFT JOIN gremistas ge ON i.gremista_entregou_id = ge.id
         ORDER BY i.id
     """)
     await conn.close()
