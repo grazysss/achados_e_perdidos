@@ -17,6 +17,13 @@ class Gremista(BaseModel):
     nome: str
     matricula: str
     cargo: str
+
+class Categoria(BaseModel):
+    nome_categoria: str
+
+class Local(BaseModel):
+    nome_local: str
+    bloco: str
 class Item(BaseModel):
     descricao: str
     data_registro: date
@@ -54,6 +61,38 @@ async def adicionar_gremista(gremistas: Gremista):
     return {
         "message": "GREMISTA ADICIONADO COM SUCESSO!!",
         "gremista": dict(novo_gremista)
+    }
+
+@app.post("/categorias")
+async def criar_categoria(categorias: Categoria):
+    conn = await get_db_connection()
+    nova_categoria = await conn.fetchrow("""
+        INSERT INTO categorias (nome_categoria)
+        VALUES ($1) RETURNING *
+        """,
+        categorias.nome_categoria
+        )
+    
+    await conn.close()
+    return {
+        "message": "CATEGORIA ADICIONADA!!",
+        "categoria": dict(nova_categoria)
+    }
+
+@app.post("/locais")
+async def adicionar_local(locais: Local):
+    conn = await get_db_connection()
+    novo_local = await conn.fetchrow("""
+        INSERT INTO locais (nome_local, bloco)
+        VALUES ($1, $2) RETURNING *
+        """,
+        locais.nome_local, locais.bloco
+        )
+    
+    await conn.close()
+    return {
+        "message": "LOCAL ADICIONADO!!",
+        "categoria": dict(novo_local)
     }
 
 @app.post("/itens")
