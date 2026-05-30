@@ -35,10 +35,10 @@ A API disponibiliza operações completas testadas e documentadas nativamente vi
 
 | Método | Endpoint | Descrição Prática no Sistema |
 | :--- | :--- | :--- |
-| **POST** | `/items` | **Registrar Achado:** Cadastra um item perdido associando uma categoria, local e o gremista que o recolheu. |
-| **GET** | `/items` | **Painel do Grêmio:** Lista todos os itens cadastrados integrando os nomes correspondentes através de SQL Joins. |
-| **GET** | `/items/{id}` | **Busca Detalhada:** Localiza um objeto específico por ID para verificar detalhes e histórico de triagem. |
-| **PUT** | `/items/{id}` | **Efetuar Devolução:** Atualiza o status do item para 'devolvido', registrando o aluno que o recuperou e o gremista que realizou a entrega. |
-| **DELETE** | `/items/{id}` | **Remover Registro:** Exclui permanentemente o item do banco de dados (ex: em casos de erro de digitação). |
+| **POST** | `/itens` | **Registrar Achado:** Cadastra um item perdido associando uma categoria, local e o gremista que o recolheu. |
+| **GET** | `/itens` | **Painel do Grêmio:** Lista todos os itens cadastrados integrando os nomes correspondentes através de SQL Joins. |
+| **GET** | `/itens/{id}` | **Busca Detalhada:** Localiza um objeto específico por ID para verificar detalhes e histórico de triagem. |
+| **PUT** | `/itens/{id}` | **Efetuar Devolução:** Atualiza o status do item para 'devolvido', registrando o aluno que o recuperou e o gremista que realizou a entrega. |
+| **DELETE** | `/itens/{id}` | **Remover Registro:** Exclui permanentemente o item do banco de dados (ex: em casos de erro de digitação). |
 
 ---

@@ -8,8 +8,8 @@ app = FastAPI()
 async def get_db_connection():
     return await asyncpg.connect(
         user="postgres",
-        password="sql",
-        database="achados-e-perdidos",
+        password="5432",
+        database="achados_e_perdidos",
         host="localhost"
     )
 
@@ -23,15 +23,57 @@ async def test_connection():
     await conn.close()
     return {"message": "Conexão da API_ACHADOS&PERDIDOS com BD_A&P bem-sucedida!"}
 
-@app.get("/items")
-async def listar_items():
+@app.get("/itens")
+async def listar_itens():
     conn = await get_db_connection()
-
-    items = await conn.fetch("""
-        SELECT * FROM itens """)
-
+    itens = await conn.fetch("""
+        SELECT
+            i.id,
+            i.descricao,
+            i.data_registro,
+            i.status,
+            i.dono_recuperou,
+            c.nome_categoria,
+            l.nome_local,
+            l.bloco,
+            gr.nome AS gremista_recebeu_nome,
+            ge.nome AS gremista_entregou_nome
+        FROM itens i
+        JOIN categorias c ON i.categoria_id = c.id
+        JOIN locais l ON i.local_id = l.id
+        JOIN gremistas gr ON i.gremista_recebeu_id = gr.id
+        JOIN gremistas ge ON i.gremista_entregou_id = ge.id
+        ORDER BY i.id
+    """)
     await conn.close()
-    return [dict(item) for item in items]
+
+    list_itens = []
+    for i in itens:
+        list_itens.append({
+                "id": i["id"],
+                "descricao": i["descricao"],
+                "data_registro": str(i["data_registro"]),
+                "status": i["status"],
+                "dono_recuperou": i["dono_recuperou"],
+                "categoria": i["nome_categoria"],
+                "local": i["nome_local"],
+                "bloco": i["bloco"],
+                "gremista_recebeu": i["gremista_recebeu_nome"],
+                "gremista_entregou": i["gremista_entregou_nome"]
+            })
+    return {"item": list_itens}
+
+
+# @app.get("/get_alunos")
+# async def get_alunos():
+#     conn = await get_db_connection()
+#     alunos = await conn.fetch("SELECT * FROM alunos")
+#     await conn.close()
+
+#     list_alunos = []
+#     for i in alunos:
+#         list_alunos.append(f"ID do aluno: {i["id"]}, nome: {i["nome"]}, email: {i["email"]}")
+#     return {"users": list_alunos}
 
 class Item(BaseModel):
     descricao: str
@@ -44,7 +86,7 @@ class Item(BaseModel):
     gremista_entregou_id: int
 
 
-@app.post("/items")
+@app.post("/itens")
 async def criar_item(item: Item):
     conn = await get_db_connection()
 
@@ -60,7 +102,6 @@ async def criar_item(item: Item):
             gremista_entregou_id
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *
     """,
     item.descricao,
     item.data_registro,
@@ -69,13 +110,13 @@ async def criar_item(item: Item):
     item.categoria_id,
     item.local_id,
     item.gremista_recebeu_id,
-    item.gremista_entregou_id)
+    item.gremista_entregou_id
+    )
 
     await conn.close()
-    return dict(novo_item)
+    return {"message": "ITEM CRIADO!"}
 
-
-@app.get("/items/{id}")
+@app.get("/itens/{id}")
 async def buscar_item(id: int):
     conn = await get_db_connection()
 
@@ -92,7 +133,7 @@ async def buscar_item(id: int):
     return dict(item)
 
 
-@app.put("/items/{id}")
+@app.put("/itens/{id}")
 async def atualizar_item(id: int, item: Item):
     conn = await get_db_connection()
 
@@ -127,7 +168,7 @@ async def atualizar_item(id: int, item: Item):
     return dict(item_atualizado)
 
 
-@app.delete("/items/{id}")
+@app.delete("/itens/{id}")
 async def deletar_item(id: int):
     conn = await get_db_connection()
 
