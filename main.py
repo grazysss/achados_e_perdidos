@@ -2,16 +2,28 @@ import asyncpg
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from datetime import date
+from passlib.context import CryptContext 
 
 app = FastAPI()
+
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+)
 
 async def get_db_connection():
     return await asyncpg.connect(
         user="postgres",
-        password="5432",
+        password="sql",
         database="achados_e_perdidos",
         host="localhost"
     )
+
+class Administrador(BaseModel):
+    nome: str
+    sobrenome: str 
+    email: str
+    senha: str
 
 class Gremista(BaseModel):
     nome: str
@@ -24,6 +36,7 @@ class Categoria(BaseModel):
 class Local(BaseModel):
     nome_local: str
     bloco: str
+
 class Item(BaseModel):
     descricao: str
     data_registro: date
@@ -33,6 +46,38 @@ class Item(BaseModel):
     local_id: int
     gremista_recebeu_id: int
     gremista_entregou_id: int | None = None
+
+@app.post("/adms")
+async def criar_administrador(admins: Administrador):
+    conn = await get_db_connection()
+
+    hash_senha = pwd_context.hash(admins.senha)
+
+    await conn.execute("""
+        INSERT INTO admins (nome, sobrenome, email, senha)
+        VALUES ($1, $2, $3, $4)
+    """,
+    admins.nome,
+    admins.sobrenome,
+    admins.email,
+    hash_senha
+    )
+
+    # novo_administrador = await conn.fetchrow("""
+    # INSERT INTO admins (nome, sobrenome, email, senha)
+    # VALUES ($1, $2, $3, $4)
+    # RETURNING *
+    # """,
+    # admins.nome,
+    # admins.sobrenome,
+    # admins.email,
+    # hash_senha
+    # )
+
+    await conn.close()
+    return {
+        "message": "ADM ADICIONADO COM SUCESSO!!",
+    }
 
 @app.get("/status")
 async def status():
