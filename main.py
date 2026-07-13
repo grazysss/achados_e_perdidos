@@ -6,6 +6,11 @@ from passlib.context import CryptContext
 
 app = FastAPI()
 
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+)
+
 async def get_db_connection():
     return await asyncpg.connect(
         user="postgres",
@@ -42,6 +47,38 @@ class Item(BaseModel):
     gremista_recebeu_id: int
     gremista_entregou_id: int | None = None
 
+@app.post("/adms")
+async def criar_administrador(admins: Administrador):
+    conn = await get_db_connection()
+
+    hash_senha = pwd_context.hash(admins.senha)
+
+    await conn.execute("""
+        INSERT INTO admins (nome, sobrenome, email, senha)
+        VALUES ($1, $2, $3, $4)
+    """,
+    admins.nome,
+    admins.sobrenome,
+    admins.email,
+    hash_senha
+    )
+
+    # novo_administrador = await conn.fetchrow("""
+    # INSERT INTO admins (nome, sobrenome, email, senha)
+    # VALUES ($1, $2, $3, $4)
+    # RETURNING *
+    # """,
+    # admins.nome,
+    # admins.sobrenome,
+    # admins.email,
+    # hash_senha
+    # )
+
+    await conn.close()
+    return {
+        "message": "ADM ADICIONADO COM SUCESSO!!",
+    }
+
 @app.get("/status")
 async def status():
     return {"message": "API FUNCIONANDOOO AEEEEEEE!!!"}
@@ -51,33 +88,6 @@ async def test_connection():
     conn = await get_db_connection()
     await conn.close()
     return {"message": "Conexão da API_ACHADOS&PERDIDOS com BD_A&P bem-sucedida!"}
-
-@app.post("/adms")
-async def criar_administrador(admins: Administrador):
-    conn = await get_db_connection()
-
-    pwd_context = CryptContext(
-        schemes=["bcrypt"],
-        deprecated="auto"
-    )
-
-    hash_senha = pwd_context.hash(admins.senha)
-
-    novo_administrador = await conn.fetchrow("""
-    INSERT INTO admins (nome, sobrenome, email, senha)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *
-    """,
-    admins.nome,
-    admins.sobrenome,
-    admins.email,
-    hash_senha
-    )
-
-    await conn.close()
-    return {
-        "message": "ADM ADICIONADO COM SUCESSO!!",
-    }
 
 @app.post("/gremistas")
 async def adicionar_gremista(gremistas: Gremista):
