@@ -25,12 +25,12 @@ create table if not exists itens (
 	
 	categoria_id int,
 	local_id int,
-	gremista_recebeu_id int,
+	usuario_recebeu_id int,
 	gremista_entregou_id int,
 
 	foreign key (categoria_id) references categorias(id) on delete set NULL,
 	foreign key (local_id) references locais(id) on delete set NULL,
-	foreign key (gremista_recebeu_id) references gremistas(id) on delete set NULL,
+	foreign key (usuario_recebeu_id) references gremistas(id) on delete set NULL,
 	foreign key (gremista_entregou_id) references gremistas(id) on delete set NULL
 )
 
@@ -71,7 +71,7 @@ INSERT INTO itens (
     dono_recuperou,
     categoria_id,
     local_id,
-    gremista_recebeu_id,
+    usuario_recebeu_id,
     gremista_entregou_id) VALUES
 	('iPhone 15 Preto', '2026-05-20', 'perdido', NULL, 1, 8, 1, NULL),
 	('Fone Bluetooth JBL Branco', '2026-05-21', 'guardado', NULL, 1, 7, 2, 4),
