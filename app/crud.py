@@ -3,6 +3,7 @@ from database import get_db_connection
 
 import models
 import schemas
+from auth import hash_password
 
 # CRUD USUÁRIOS
 
@@ -16,7 +17,7 @@ async def criar_usuario(usuario: schemas.UsuarioCreate):
             cargo=usuario.cargo,
             username=usuario.username,
             email=usuario.email,
-            senha=usuario.senha
+            senha=hash_password(usuario.senha)
         )
 
         db.add(db_usuario)
