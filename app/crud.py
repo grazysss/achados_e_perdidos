@@ -12,7 +12,7 @@ from auth import hash_password, verify_password
 
 async def criar_usuario(usuario: schemas.UsuarioCreate):
     db = await get_db_connection()
-
+    
     try:
         db_usuario = models.Usuario(
             nome=usuario.nome,
@@ -31,8 +31,6 @@ async def criar_usuario(usuario: schemas.UsuarioCreate):
 
     finally: 
         await db.close()
-
-
 
 async def listar_usuarios():
     db = await get_db_connection()
@@ -211,108 +209,8 @@ async def deletar_categoria(id: int):
         
         await db.delete(db_categoria)
         await db.commit()
-        await db.refresh()
         
         return db_categoria
     
     finally: 
-        await db.close()
-
-# CRUD LOCAIS
-
-async def criar_local(local: schemas.LocalCreate):
-    db = await get_db_connection()
-
-    try:
-        db_local = models.Local(
-            nome_local=local.nome_local,
-            bloco=local.bloco
-        )
-
-        db.add(db_local)
-
-        await db.commit()
-        await db.refresh(db_local)
-
-        return db_local
-
-    finally:
-        await db.close()
-
-
-async def listar_locais():
-    db = await get_db_connection()
-
-    try:
-        result = await db.execute(
-            select(models.Local)
-        )
-
-        return result.scalars().all()
-
-    finally:
-        await db.close()
-
-
-async def buscar_local(id: int):
-    db = await get_db_connection()
-
-    try:
-        result = await db.execute(
-            select(models.Local)
-            .where(models.Local.id == id)
-        )
-
-        return result.scalar_one_or_none()
-
-    finally:
-        await db.close()
-
-
-async def atualizar_local(id: int, local: schemas.LocalCreate):
-    db = await get_db_connection()
-
-    try:
-        result = await db.execute(
-            select(models.Local)
-            .where(models.Local.id == id)
-        )
-
-        db_local = result.scalar_one_or_none()
-
-        if db_local is None:
-            return None
-
-        db_local.nome_local = local.nome_local
-        db_local.bloco = local.bloco
-
-        await db.commit()
-        await db.refresh(db_local)
-
-        return db_local
-
-    finally:
-        await db.close()
-
-
-async def deletar_local(id:int):
-    db = await get_db_connection()
-
-    try:
-        result = await db.execute(
-            select(models.Local)
-            .where(models.Local.id == id)
-        )
-
-        db_local = result.scalar_one_or_none()
-
-        if db_local is None:
-            return None
-
-        await db.delete(db_local)
-        await db.commit()
-
-        return db_local
-
-    finally:
         await db.close()
