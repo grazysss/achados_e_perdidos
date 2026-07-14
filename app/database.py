@@ -26,7 +26,7 @@ DB_NAME = os.getenv("DB_NAME")
 DATABASE_URL = (
     f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 ) # Monta a URL de conexão pra acessar o Postgres
-
+print(DATABASE_URL)
 engine = create_async_engine(DATABASE_URL)
 
 class Base(DeclarativeBase):
