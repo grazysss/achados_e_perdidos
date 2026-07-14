@@ -26,5 +26,4 @@ class Base(DeclarativeBase):
     pass
 
 async def get_db_connection():
-    async with AsyncSession(engine, expire_on_commit=False) as session:
-        yield session
+    return AsyncSession(engine, expire_on_commit=False)

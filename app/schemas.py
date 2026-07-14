@@ -27,6 +27,12 @@ class UsuarioResponse(BaseModel):
 class CategoriaCreate(BaseModel):
     nome_categoria: str
 
+class CategoriaResponse(BaseModel):
+    id: int
+    nome_categoria: str
+    class Config:
+        from_attributes = True
+
 class LocalCreate(BaseModel):
     nome_local: str
     bloco: str

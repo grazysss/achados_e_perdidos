@@ -13,7 +13,7 @@ async def criar_categoria(categoria: schemas.CategoriaCreate):
     return await crud.criar_categoria(categoria)
 
 @router.get("/", response_model=list[schemas.CategoriaResponse])
-async def listar_usuarios():
+async def listar_categorias():
     return await crud.listar_categorias()
 
 @router.get("/{id}", response_model=schemas.CategoriaResponse)
