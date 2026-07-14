@@ -38,11 +38,13 @@ class Local(Base):
 
 class Item(Base):
     __tablename__ = "itens"
+
     id: Mapped[int] = mapped_column(primary_key=True)
 
     descricao: Mapped[str]
     data_registro: Mapped[date]
     status: Mapped[str]
+    dono_recuperou: Mapped[str | None]
 
     categoria_id: Mapped[int] = mapped_column(ForeignKey("categorias.id"))
     local_id: Mapped[int] = mapped_column(ForeignKey("locais.id"))
