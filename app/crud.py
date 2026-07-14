@@ -12,7 +12,7 @@ from auth import hash_password, verify_password
 
 async def criar_usuario(usuario: schemas.UsuarioCreate):
     db = await get_db_connection()
-    
+
     try:
         db_usuario = models.Usuario(
             nome=usuario.nome,
@@ -209,6 +209,7 @@ async def deletar_categoria(id: int):
         
         await db.delete(db_categoria)
         await db.commit()
+        await db.refresh()
         
         return db_categoria
     
