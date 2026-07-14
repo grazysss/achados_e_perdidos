@@ -419,5 +419,4 @@ async def deletar_item(id: int):
         return db_item
 
     finally:
->>>>>>> 630bbf672a8a2e7d8e82b422d08c731c4d52110b
         await db.close()
