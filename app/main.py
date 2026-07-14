@@ -1,328 +1,355 @@
-import asyncpg
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from datetime import date
-from passlib.context import CryptContext 
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from database import engine, Base
+from routers import usuarios, categorias
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
 
-async def get_db_connection():
-    return await asyncpg.connect(
-        user="postgres",
-        password="5432",
-        database="achados_e_perdidos",
-        host="localhost"
-    )
+app = FastAPI(
+    title="API Achados e Perdidos - GEAF"
+)
 
-class Usuario(BaseModel):
-    nome: str
-    matricula: str
-    cargo: str
-    username: str
-    email: str
-    senha: str
-class Categoria(BaseModel):
-    nome_categoria: str
+app.include_router(usuarios.router)
+app.include_router(categorias.router)
 
-class Local(BaseModel):
-    nome_local: str
-    bloco: str
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     async with engine.begin() as conn:
+#         await conn.run_sync(Base.metadata.create_all)
+#     yield
 
-class Item(BaseModel):
-    descricao: str
-    data_registro: date
-    status: str
-    dono_recuperou: str | None = None
-    categoria_id: int
-    local_id: int
-    usuario_recebeu_id: int
+# app = FastAPI(lifespan=lifespan)
+# app.include_router(usuarios.router)
 
-@app.get("/status")
-async def status():
-    return {"message": "API FUNCIONANDOOO AEEEEEEE!!!"}
+# import asyncpg
+# from fastapi import FastAPI, HTTPException
+# from pydantic import BaseModel
+# from datetime import date
+# from passlib.context import CryptContext 
 
-@app.get("/test")
-async def test_connection():
-    conn = await get_db_connection()
-    await conn.close()
-    return {"message": "Conexão da API_ACHADOS&PERDIDOS com BD_A&P bem-sucedida!"}
+# app = FastAPI()
 
-@app.post("/usuarios")
-async def criar_usuario(usuario: Usuario):
-    conn = await get_db_connection()
-    novo_usuario = await conn.fetchrow("""
-    INSERT INTO usuario (nome, matricula, cargo, username, email, senha)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING *
-    """,
-    usuario.nome,
-    usuario.matricula,
-    usuario.cargo,
-    usuario.username,
-    usuario.email,
-    usuario.senha
-    )
+# async def get_db_connection():
+#     return await asyncpg.connect(
+#         user="postgres",
+#         password="5432",
+#         database="achados_e_perdidos",
+#         host="localhost"
+#     )
+
+# class Usuario(BaseModel):
+#     nome: str
+#     matricula: str
+#     cargo: str
+#     username: str
+#     email: str
+#     senha: str
+# class Categoria(BaseModel):
+#     nome_categoria: str
+
+# class Local(BaseModel):
+#     nome_local: str
+#     bloco: str
+
+# class Item(BaseModel):
+#     descricao: str
+#     data_registro: date
+#     status: str
+#     dono_recuperou: str | None = None
+#     categoria_id: int
+#     local_id: int
+#     usuario_recebeu_id: int
+
+# @app.get("/status")
+# async def status():
+#     return {"message": "API FUNCIONANDOOO AEEEEEEE!!!"}
+
+# @app.get("/test")
+# async def test_connection():
+#     conn = await get_db_connection()
+#     await conn.close()
+#     return {"message": "Conexão da API_ACHADOS&PERDIDOS com BD_A&P bem-sucedida!"}
+
+# @app.post("/usuarios")
+# async def criar_usuario(usuario: Usuario):
+#     conn = await get_db_connection()
+#     novo_usuario = await conn.fetchrow("""
+#     INSERT INTO usuario (nome, matricula, cargo, username, email, senha)
+#     VALUES ($1, $2, $3, $4, $5, $6)
+#     RETURNING *
+#     """,
+#     usuario.nome,
+#     usuario.matricula,
+#     usuario.cargo,
+#     usuario.username,
+#     usuario.email,
+#     usuario.senha
+#     )
     
-    await conn.close()
-    return {
-        "message": "CATEGORIA ADICIONADA!!",
-        "categoria": dict(novo_usuario)
-    }
+#     await conn.close()
+#     return {
+#         "message": "CATEGORIA ADICIONADA!!",
+#         "categoria": dict(novo_usuario)
+#     }
 
-@app.post("/categorias")
-async def criar_categoria(categorias: Categoria):
-    conn = await get_db_connection()
-    nova_categoria = await conn.fetchrow("""
-        INSERT INTO categorias (nome_categoria)
-        VALUES ($1) RETURNING *
-        """,
-        categorias.nome_categoria
-        )
+# @app.post("/categorias")
+# async def criar_categoria(categorias: Categoria):
+#     conn = await get_db_connection()
+#     nova_categoria = await conn.fetchrow("""
+#         INSERT INTO categorias (nome_categoria)
+#         VALUES ($1) RETURNING *
+#         """,
+#         categorias.nome_categoria
+#         )
     
-    await conn.close()
-    return {
-        "message": "CATEGORIA ADICIONADA!!",
-        "categoria": dict(nova_categoria)
-    }
+#     await conn.close()
+#     return {
+#         "message": "CATEGORIA ADICIONADA!!",
+#         "categoria": dict(nova_categoria)
+#     }
 
-@app.get("/categorias")
-async def listar_categorias():
-    conn = await get_db_connection()
+# @app.get("/categorias")
+# async def listar_categorias():
+#     conn = await get_db_connection()
 
-    categorias = await conn.fetch("""
-        SELECT * FROM categorias
-        ORDER BY id
-    """)
+#     categorias = await conn.fetch("""
+#         SELECT * FROM categorias
+#         ORDER BY id
+#     """)
 
-    await conn.close()
+#     await conn.close()
 
-    return {
-        "message": "CATEGORIAS LISTADAS COM SUCESSO!",
-        "categorias": [dict(categoria) for categoria in categorias]
-    }
+#     return {
+#         "message": "CATEGORIAS LISTADAS COM SUCESSO!",
+#         "categorias": [dict(categoria) for categoria in categorias]
+#     }
 
-@app.delete("/categorias/{id}")
-async def deletar_categoria(id: int):
-    conn = await get_db_connection()
-    categoria_deletada = await conn.fetchrow("""
-        DELETE FROM categorias
-        WHERE id = $1
-        RETURNING *
-        """, id)
+# @app.delete("/categorias/{id}")
+# async def deletar_categoria(id: int):
+#     conn = await get_db_connection()
+#     categoria_deletada = await conn.fetchrow("""
+#         DELETE FROM categorias
+#         WHERE id = $1
+#         RETURNING *
+#         """, id)
     
-    await conn.close()
+#     await conn.close()
 
-    if categoria_deletada is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Categoria não encontrada"
-        )
+#     if categoria_deletada is None:
+#         raise HTTPException(
+#             status_code=404,
+#             detail="Categoria não encontrada"
+#         )
     
-    return {
-        "message": "CATEGORIA DELETADA COM SUCESSO!",
-        "categoria": dict(categoria_deletada)
-    }
+#     return {
+#         "message": "CATEGORIA DELETADA COM SUCESSO!",
+#         "categoria": dict(categoria_deletada)
+#     }
 
-@app.post("/locais")
-async def adicionar_local(locais: Local):
-    conn = await get_db_connection()
-    novo_local = await conn.fetchrow("""
-        INSERT INTO locais (nome_local, bloco)
-        VALUES ($1, $2) RETURNING *
-        """,
-        locais.nome_local, locais.bloco
-        )
+# @app.post("/locais")
+# async def adicionar_local(locais: Local):
+#     conn = await get_db_connection()
+#     novo_local = await conn.fetchrow("""
+#         INSERT INTO locais (nome_local, bloco)
+#         VALUES ($1, $2) RETURNING *
+#         """,
+#         locais.nome_local, locais.bloco
+#         )
     
-    await conn.close()
-    return {
-        "message": "LOCAL ADICIONADO!!",
-        "local": dict(novo_local)
-    }
+#     await conn.close()
+#     return {
+#         "message": "LOCAL ADICIONADO!!",
+#         "local": dict(novo_local)
+#     }
 
-@app.delete("/locais/{id}")
-async def deletar_local(id: int):
-    conn = await get_db_connection()
-    local_deletado = await conn.fetchrow("""
-        DELETE FROM locais
-        WHERE id = $1
-        RETURNING *
-        """, id)
+# @app.delete("/locais/{id}")
+# async def deletar_local(id: int):
+#     conn = await get_db_connection()
+#     local_deletado = await conn.fetchrow("""
+#         DELETE FROM locais
+#         WHERE id = $1
+#         RETURNING *
+#         """, id)
     
-    await conn.close()
+#     await conn.close()
 
-    if local_deletado is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Local não foi encontrado"
-        )
+#     if local_deletado is None:
+#         raise HTTPException(
+#             status_code=404,
+#             detail="Local não foi encontrado"
+#         )
     
-    return {
-        "message": "LOCAL DELETADO COM SUCESSO!",
-        "local": dict(local_deletado)
-    }
+#     return {
+#         "message": "LOCAL DELETADO COM SUCESSO!",
+#         "local": dict(local_deletado)
+#     }
 
-@app.post("/itens")
-async def criar_item(item: Item):
-    conn = await get_db_connection()
+# @app.post("/itens")
+# async def criar_item(item: Item):
+#     conn = await get_db_connection()
 
-    novo_item = await conn.fetchrow("""
-        INSERT INTO itens (
-            descricao,
-            data_registro,
-            status,
-            dono_recuperou,
-            categoria_id,
-            local_id,
-            entregue_por_
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    """,
-    item.descricao,
-    item.data_registro,
-    item.status,
-    item.dono_recuperou,
-    item.categoria_id,
-    item.local_id,
-    item.entregue_por
-    )
+#     novo_item = await conn.fetchrow("""
+#         INSERT INTO itens (
+#             descricao,
+#             data_registro,
+#             status,
+#             dono_recuperou,
+#             categoria_id,
+#             local_id,
+#             entregue_por_
+#         )
+#         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+#     """,
+#     item.descricao,
+#     item.data_registro,
+#     item.status,
+#     item.dono_recuperou,
+#     item.categoria_id,
+#     item.local_id,
+#     item.entregue_por
+#     )
 
-    await conn.close()
-    return {
-        "message": "ITEM CRIADO!",
-        "item": dict(novo_item)
-        }
+#     await conn.close()
+#     return {
+#         "message": "ITEM CRIADO!",
+#         "item": dict(novo_item)
+#         }
 
-@app.get("/locais")
-async def listar_locais():
-    conn = await get_db_connection()
+# @app.get("/locais")
+# async def listar_locais():
+#     conn = await get_db_connection()
 
-    locais = await conn.fetch("""
-        SELECT * FROM locais
-        ORDER BY id
-    """)
+#     locais = await conn.fetch("""
+#         SELECT * FROM locais
+#         ORDER BY id
+#     """)
 
-    await conn.close()
+#     await conn.close()
 
-    return {
-        "message": "LOCAIS LISTADOS COM SUCESSO!",
-        "locais": [dict(local) for local in locais]
-    }
+#     return {
+#         "message": "LOCAIS LISTADOS COM SUCESSO!",
+#         "locais": [dict(local) for local in locais]
+#     }
 
-@app.get("/itens")
-async def listar_itens():
-    conn = await get_db_connection()
-    itens = await conn.fetch("""
-        SELECT
-            i.id,
-            i.descricao,
-            i.data_registro,
-            i.status,
-            i.dono_recuperou,
-            c.nome_categoria,
-            l.nome_local,
-            l.bloco,
-            ur.nome AS usuario_recebeu_nome
-        FROM itens i
-        JOIN categorias c ON i.categoria_id = c.id
-        JOIN locais l ON i.local_id = l.id
-        LEFT JOIN usuarios ur ON i.usuarios_recebeu_id = ur.id
-        ORDER BY i.id
-    """)
-    await conn.close()
+# @app.get("/itens")
+# async def listar_itens():
+#     conn = await get_db_connection()
+#     itens = await conn.fetch("""
+#         SELECT
+#             i.id,
+#             i.descricao,
+#             i.data_registro,
+#             i.status,
+#             i.dono_recuperou,
+#             c.nome_categoria,
+#             l.nome_local,
+#             l.bloco,
+#             ur.nome AS usuario_recebeu_nome
+#         FROM itens i
+#         JOIN categorias c ON i.categoria_id = c.id
+#         JOIN locais l ON i.local_id = l.id
+#         LEFT JOIN usuarios ur ON i.usuarios_recebeu_id = ur.id
+#         ORDER BY i.id
+#     """)
+#     await conn.close()
 
-    list_itens = []
-    for i in itens:
-        list_itens.append({
-                "id": i["id"],
-                "descricao": i["descricao"],
-                "data_registro": str(i["data_registro"]),
-                "status": i["status"],
-                "dono_recuperou": i["dono_recuperou"],
-                "categoria": i["nome_categoria"],
-                "local": i["nome_local"],
-                "bloco": i["bloco"],
-                "gremista_recebeu": i["gremista_recebeu_nome"],
-                "gremista_entregou": i["gremista_entregou_nome"]
-            })
-    return {
-    "message": "ITENS LISTADOS COM SUCESSO!",
-    "itens": list_itens
-}
+#     list_itens = []
+#     for i in itens:
+#         list_itens.append({
+#                 "id": i["id"],
+#                 "descricao": i["descricao"],
+#                 "data_registro": str(i["data_registro"]),
+#                 "status": i["status"],
+#                 "dono_recuperou": i["dono_recuperou"],
+#                 "categoria": i["nome_categoria"],
+#                 "local": i["nome_local"],
+#                 "bloco": i["bloco"],
+#                 "gremista_recebeu": i["gremista_recebeu_nome"],
+#                 "gremista_entregou": i["gremista_entregou_nome"]
+#             })
+#     return {
+#     "message": "ITENS LISTADOS COM SUCESSO!",
+#     "itens": list_itens
+# }
 
-@app.get("/itens/{id}")
-async def buscar_item(id: int):
-    conn = await get_db_connection()
+# @app.get("/itens/{id}")
+# async def buscar_item(id: int):
+#     conn = await get_db_connection()
 
-    item = await conn.fetchrow(
-        "SELECT * FROM itens WHERE id = $1",
-        id
-    )
+#     item = await conn.fetchrow(
+#         "SELECT * FROM itens WHERE id = $1",
+#         id
+#     )
 
-    await conn.close()
+#     await conn.close()
 
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item não encontrado")
+#     if item is None:
+#         raise HTTPException(status_code=404, detail="Item não encontrado")
 
-    return {
-    "message": "ITEM ENCONTRADO!",
-    "item": dict(item)
-}
-
-
-@app.put("/itens/{id}")
-async def atualizar_item(id: int, item: Item):
-    conn = await get_db_connection()
-
-    item_atualizado = await conn.fetchrow("""
-        UPDATE itens
-        SET descricao = $1,
-            data_registro = $2,
-            status = $3,
-            dono_recuperou = $4,
-            categoria_id = $5,
-            local_id = $6,
-            usuario_recebeu_id = $7,
-            gremista_entregou_id = $8
-        WHERE id = $9
-        RETURNING *
-    """,
-    item.descricao,
-    item.data_registro,
-    item.status,
-    item.dono_recuperou,
-    item.categoria_id,
-    item.local_id,
-    item.usuario_recebeu_id,
-    item.gremista_entregou_id,
-    id)
-
-    await conn.close()
-
-    if item_atualizado is None:
-        raise HTTPException(status_code=404, detail="Item não encontrado")
-
-    return {
-    "message": "ITEM ATUALIZADO COM SUCESSO!",
-    "item": dict(item_atualizado)
-}
+#     return {
+#     "message": "ITEM ENCONTRADO!",
+#     "item": dict(item)
+# }
 
 
-@app.delete("/itens/{id}")
-async def deletar_item(id: int):
-    conn = await get_db_connection()
+# @app.put("/itens/{id}")
+# async def atualizar_item(id: int, item: Item):
+#     conn = await get_db_connection()
 
-    item_deletado = await conn.fetchrow("""
-        DELETE FROM itens
-        WHERE id = $1
-        RETURNING *
-    """, id)
+#     item_atualizado = await conn.fetchrow("""
+#         UPDATE itens
+#         SET descricao = $1,
+#             data_registro = $2,
+#             status = $3,
+#             dono_recuperou = $4,
+#             categoria_id = $5,
+#             local_id = $6,
+#             usuario_recebeu_id = $7,
+#             gremista_entregou_id = $8
+#         WHERE id = $9
+#         RETURNING *
+#     """,
+#     item.descricao,
+#     item.data_registro,
+#     item.status,
+#     item.dono_recuperou,
+#     item.categoria_id,
+#     item.local_id,
+#     item.usuario_recebeu_id,
+#     item.gremista_entregou_id,
+#     id)
 
-    await conn.close()
+#     await conn.close()
 
-    if item_deletado is None:
-        raise HTTPException(status_code=404, detail="Item não encontrado")
+#     if item_atualizado is None:
+#         raise HTTPException(status_code=404, detail="Item não encontrado")
 
-    return {
-        "message": "Item deletado com sucesso",
-        "item": dict(item_deletado)
-    }
+#     return {
+#     "message": "ITEM ATUALIZADO COM SUCESSO!",
+#     "item": dict(item_atualizado)
+# }
+
+
+# @app.delete("/itens/{id}")
+# async def deletar_item(id: int):
+#     conn = await get_db_connection()
+
+#     item_deletado = await conn.fetchrow("""
+#         DELETE FROM itens
+#         WHERE id = $1
+#         RETURNING *
+#     """, id)
+
+#     await conn.close()
+
+#     if item_deletado is None:
+#         raise HTTPException(status_code=404, detail="Item não encontrado")
+
+#     return {
+#         "message": "Item deletado com sucesso",
+#         "item": dict(item_deletado)
+#     }
