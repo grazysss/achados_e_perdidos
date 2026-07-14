@@ -6,7 +6,7 @@ from database import get_db_connection
 
 import models
 import schemas
-from auth import hash_password
+from auth import hash_password, verify_password
 
 # CRUD USUÁRIOS
 
@@ -60,6 +60,23 @@ async def buscar_usuario(id: int):
     finally:
         await db.close()
 
+async def buscar_usuario_username(username: str):
+    db = await get_db_connection()
+
+    try:
+        result = await db.execute(
+            select(models.Usuario).where(
+                models.Usuario.username == username
+            )
+        )
+
+        usuario = result.scalar_one_or_none()
+
+        return usuario
+
+    finally:
+        await db.close()
+
 async def atualizar_usuario(id: int, usuario: schemas.UsuarioCreate):
     db = await get_db_connection()
 
@@ -78,7 +95,7 @@ async def atualizar_usuario(id: int, usuario: schemas.UsuarioCreate):
         db_usuario.cargo = usuario.cargo
         db_usuario.username = usuario.username
         db_usuario.email = usuario.email
-        db_usuario.senha = usuario.senha
+        db_usuario.senha = hash_password(usuario.senha)
 
         await db.commit()
         await db.refresh(db_usuario)

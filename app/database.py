@@ -1,3 +1,4 @@
+
 import os
 
 # Database: responsável por configurar e gerenciar a conexão da API com o BD 
