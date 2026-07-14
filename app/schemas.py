@@ -1,3 +1,5 @@
+# Schemas: Define os BASEMODEL utiliazdos para validar dados que entram e saem da API
+
 from datetime import date
 from pydantic import BaseModel
 
@@ -8,10 +10,12 @@ class UsuarioCreate(BaseModel):
     username: str
     email: str
     senha: str
+# Validação dos dados de cadastro de usuário
 
 class UsuarioLogin(BaseModel):
     username: str
     senha: str
+# Validação de dados do login
 
 class UsuarioResponse(BaseModel):
     id: int
@@ -20,7 +24,7 @@ class UsuarioResponse(BaseModel):
     cargo: str
     username: str
     email: str
-
+# Modelo de informações retornadas
     class Config:
         from_attributes = True
 

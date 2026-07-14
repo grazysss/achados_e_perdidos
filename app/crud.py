@@ -1,3 +1,6 @@
+# Crud: Contém toda lógica de acesso ao BD realizando todas as operações
+# (POST, GET, PUT, DELETE)
+
 from sqlalchemy import select
 from database import get_db_connection
 
@@ -20,9 +23,9 @@ async def criar_usuario(usuario: schemas.UsuarioCreate):
             senha=hash_password(usuario.senha)
         )
 
-        db.add(db_usuario)
-        await db.commit()
-        await db.refresh(db_usuario)
+        db.add(db_usuario) # Adiciona o obj à sessão do BD
+        await db.commit() # Confirma as alterações no BD
+        await db.refresh(db_usuario) # Atualiza o objeto com suas novas informações
 
         return db_usuario
 
@@ -33,8 +36,8 @@ async def listar_usuarios():
     db = await get_db_connection()
 
     try:
-        result = await db.execute(
-            select(models.Usuario)
+        result = await db.execute( # Executa uma consulta
+            select(models.Usuario) # Seleciona registros de uma tabela
         )
 
         usuarios = result.scalars().all()

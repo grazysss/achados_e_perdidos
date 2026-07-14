@@ -1,21 +1,25 @@
+# Models: Define as tabelas do BD utilizadno o SQLAlchemy, 
+# espeficiando colunas, tipos, dados e relacionamentos
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 from datetime import date
-
 class Usuario(Base):
     __tablename__ = "usuarios"
     id: Mapped[int] = mapped_column(primary_key=True)
+    # Mapped[x] indica o tipo de dados que será armazenado
 
     nome: Mapped[str]
     matricula: Mapped[str] = mapped_column(unique=True)
+                            # Configura propriedades especiais da coluna
     cargo: Mapped[str]
     username: Mapped[str]
     email: Mapped[str]
     senha: Mapped[str]
 
     itens_recebidos: Mapped[list["Item"]] = relationship(back_populates="usuario_recebeu")
-
+    # back_populates: relacionamento que existe em ambos sentidos entre as tabelas
 class Categoria(Base):
     __tablename__ = "categorias"
     id: Mapped[int] = mapped_column(primary_key=True)

@@ -1,3 +1,5 @@
+# Auth: Responsável pela autenticação dos usuários (administra as senhas)
+
 from passlib.context import CryptContext #criar hash e verificar hash
 
 
