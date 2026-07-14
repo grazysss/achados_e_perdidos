@@ -5,6 +5,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 from datetime import date
+
 class Usuario(Base):
     __tablename__ = "usuarios"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -37,11 +38,13 @@ class Local(Base):
 
 class Item(Base):
     __tablename__ = "itens"
+
     id: Mapped[int] = mapped_column(primary_key=True)
 
     descricao: Mapped[str]
     data_registro: Mapped[date]
     status: Mapped[str]
+    dono_recuperou: Mapped[str | None]
 
     categoria_id: Mapped[int] = mapped_column(ForeignKey("categorias.id"))
     local_id: Mapped[int] = mapped_column(ForeignKey("locais.id"))

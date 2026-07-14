@@ -45,6 +45,7 @@ class ItemCreate(BaseModel):
     descricao: str
     data_registro: date
     status: str
+    dono_recuperou: str | None = None
     categoria_id: int
     local_id: int
     usuario_recebeu_id: int
