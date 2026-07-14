@@ -316,3 +316,110 @@ async def deletar_local(id:int):
 
     finally:
         await db.close()
+
+# CRUD ITENS
+
+async def criar_item(item: schemas.ItemCreate):
+    db = await get_db_connection()
+
+    try:
+        db_item = models.Item(
+            descricao=item.descricao,
+            data_registro=item.data_registro,
+            status=item.status,
+            categoria_id=item.categoria_id,
+            local_id=item.local_id,
+            usuario_recebeu_id=item.usuario_recebeu_id
+        )
+
+        db.add(db_item)
+
+        await db.commit()
+        await db.refresh(db_item)
+
+        return db_item
+
+    finally:
+        await db.close()
+
+
+async def listar_itens():
+    db = await get_db_connection()
+
+    try:
+        result = await db.execute(
+            select(models.Item)
+        )
+
+        return result.scalars().all()
+
+    finally:
+        await db.close()
+
+
+async def buscar_item(id: int):
+    db = await get_db_connection()
+
+    try:
+        result = await db.execute(
+            select(models.Item)
+            .where(models.Item.id == id)
+        )
+
+        return result.scalar_one_or_none()
+
+    finally:
+        await db.close()
+
+
+async def atualizar_item(id: int, item: schemas.ItemCreate):
+    db = await get_db_connection()
+
+    try:
+        result = await db.execute(
+            select(models.Item)
+            .where(models.Item.id == id)
+        )
+
+        db_item = result.scalar_one_or_none()
+
+        if db_item is None:
+            return None
+
+        db_item.descricao = item.descricao
+        db_item.data_registro = item.data_registro
+        db_item.status = item.status
+        db_item.categoria_id = item.categoria_id
+        db_item.local_id = item.local_id
+        db_item.usuario_recebeu_id = item.usuario_recebeu_id
+
+        await db.commit()
+        await db.refresh(db_item)
+
+        return db_item
+
+    finally:
+        await db.close()
+
+
+async def deletar_item(id: int):
+    db = await get_db_connection()
+
+    try:
+        result = await db.execute(
+            select(models.Item)
+            .where(models.Item.id == id)
+        )
+
+        db_item = result.scalar_one_or_none()
+
+        if db_item is None:
+            return None
+
+        await db.delete(db_item)
+        await db.commit()
+
+        return db_item
+
+    finally:
+        await db.close()
